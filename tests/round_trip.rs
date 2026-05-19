@@ -173,23 +173,23 @@ fn owner_spirit_canonical_examples_round_trip() {
         OwnerSpiritRequest::StartOrder(StartOrder {
             generation: Generation::new(1),
         }),
-        "(StartOrder (Generation 1))",
+        "(StartOrder ((1)))",
     );
     round_trip_nota(
         OwnerSpiritRequest::RegisterIdentity(RegisterIdentity { name: psyche() }),
-        "(RegisterIdentity author)",
+        "(RegisterIdentity (author))",
     );
     round_trip_nota(
         OwnerSpiritReply::Started(Started {
             generation: Generation::new(1),
         }),
-        "(Started (Generation 1))",
+        "(Started ((1)))",
     );
     round_trip_nota(
         OwnerSpiritReply::RequestUnimplemented(RequestUnimplemented {
             operation: OperationKind::StartOrder,
             reason: UnimplementedReason::NotBuiltYet,
         }),
-        "(RequestUnimplemented StartOrder NotBuiltYet)",
+        "(RequestUnimplemented (StartOrder NotBuiltYet))",
     );
 }
