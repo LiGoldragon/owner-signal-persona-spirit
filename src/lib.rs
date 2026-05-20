@@ -109,55 +109,12 @@ signal_channel! {
         operation Register(Registration),
         operation Retire(Retirement),
     }
-        reply OwnerSpiritReply {
-            Started(Started),
-            DrainedAndStopped(DrainedAndStopped),
-            BootstrapPolicyReloaded(BootstrapPolicyReloaded),
-            IdentityRegistered(IdentityRegistered),
-            IdentityRetired(IdentityRetired),
-            RequestUnimplemented(RequestUnimplemented),
-        }
-}
-
-pub type Frame = OwnerSpiritFrame;
-pub type FrameBody = OwnerSpiritFrameBody;
-pub type ChannelRequest = OwnerSpiritChannelRequest;
-pub type ChannelReply = OwnerSpiritChannelReply;
-pub type RequestBuilder = OwnerSpiritRequestBuilder;
-pub type OwnerSpiritRequest = OwnerSpiritOperation;
-
-impl From<Started> for OwnerSpiritReply {
-    fn from(payload: Started) -> Self {
-        Self::Started(payload)
-    }
-}
-
-impl From<DrainedAndStopped> for OwnerSpiritReply {
-    fn from(payload: DrainedAndStopped) -> Self {
-        Self::DrainedAndStopped(payload)
-    }
-}
-
-impl From<BootstrapPolicyReloaded> for OwnerSpiritReply {
-    fn from(payload: BootstrapPolicyReloaded) -> Self {
-        Self::BootstrapPolicyReloaded(payload)
-    }
-}
-
-impl From<IdentityRegistered> for OwnerSpiritReply {
-    fn from(payload: IdentityRegistered) -> Self {
-        Self::IdentityRegistered(payload)
-    }
-}
-
-impl From<IdentityRetired> for OwnerSpiritReply {
-    fn from(payload: IdentityRetired) -> Self {
-        Self::IdentityRetired(payload)
-    }
-}
-
-impl From<RequestUnimplemented> for OwnerSpiritReply {
-    fn from(payload: RequestUnimplemented) -> Self {
-        Self::RequestUnimplemented(payload)
+    reply Reply {
+        Started(Started),
+        DrainedAndStopped(DrainedAndStopped),
+        BootstrapPolicyReloaded(BootstrapPolicyReloaded),
+        IdentityRegistered(IdentityRegistered),
+        IdentityRetired(IdentityRetired),
+        RequestUnimplemented(RequestUnimplemented),
     }
 }

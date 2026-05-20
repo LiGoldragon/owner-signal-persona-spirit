@@ -1,13 +1,12 @@
 use nota_codec::{Decoder, Encoder, NotaDecode, NotaEncode};
 use owner_signal_persona_spirit::{
     BootstrapPolicy, BootstrapPolicyReloaded, Drain, DrainedAndStopped, Frame, FrameBody,
-    Generation, IdentityName, IdentityRegistered, IdentityRetired, OwnerSpiritReply,
-    OwnerSpiritRequest, Registration, RequestUnimplemented, Retirement, Start, Started,
-    UnimplementedReason,
+    Generation, IdentityName, IdentityRegistered, IdentityRetired, Operation, Registration, Reply,
+    RequestUnimplemented, Retirement, Start, Started, UnimplementedReason,
 };
 use signal_frame::{
-    ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply, RequestPayload, SessionEpoch,
-    SignalOperationHeads, SubReply,
+    ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply as FrameReply, RequestPayload,
+    SessionEpoch, SignalOperationHeads, SubReply,
 };
 
 const CANONICAL: &str = include_str!("../examples/canonical.nota");
@@ -32,7 +31,7 @@ fn retirement() -> Retirement {
     }
 }
 
-fn round_trip_request(request: OwnerSpiritRequest) -> OwnerSpiritRequest {
+fn round_trip_request(request: Operation) -> Operation {
     let frame = Frame::new(FrameBody::Request {
         exchange: exchange(),
         request: request.clone().into_request(),
@@ -45,16 +44,16 @@ fn round_trip_request(request: OwnerSpiritRequest) -> OwnerSpiritRequest {
     }
 }
 
-fn round_trip_reply(reply: OwnerSpiritReply) -> OwnerSpiritReply {
+fn round_trip_reply(reply: Reply) -> Reply {
     let frame = Frame::new(FrameBody::Reply {
         exchange: exchange(),
-        reply: Reply::committed(NonEmpty::single(SubReply::Ok(reply))),
+        reply: FrameReply::committed(NonEmpty::single(SubReply::Ok(reply))),
     });
     let bytes = frame.encode_length_prefixed().expect("encode");
     let decoded = Frame::decode_length_prefixed(&bytes).expect("decode");
     match decoded.into_body() {
         FrameBody::Reply { reply, .. } => match reply {
-            Reply::Accepted { per_operation, .. } => match per_operation.into_head() {
+            FrameReply::Accepted { per_operation, .. } => match per_operation.into_head() {
                 SubReply::Ok(payload) => payload,
                 other => panic!("expected accepted reply payload, got {other:?}"),
             },
@@ -85,13 +84,13 @@ where
 #[test]
 fn owner_spirit_requests_round_trip() {
     let requests = [
-        OwnerSpiritRequest::Start(Start {
+        Operation::Start(Start {
             generation: Generation::new(1),
         }),
-        OwnerSpiritRequest::Drain(Drain {}),
-        OwnerSpiritRequest::Reload(BootstrapPolicy {}),
-        OwnerSpiritRequest::Register(registration()),
-        OwnerSpiritRequest::Retire(retirement()),
+        Operation::Drain(Drain {}),
+        Operation::Reload(BootstrapPolicy {}),
+        Operation::Register(registration()),
+        Operation::Retire(retirement()),
     ];
 
     for request in requests {
@@ -102,18 +101,18 @@ fn owner_spirit_requests_round_trip() {
 #[test]
 fn owner_spirit_replies_round_trip() {
     let replies = [
-        OwnerSpiritReply::Started(Started {
+        Reply::Started(Started {
             generation: Generation::new(1),
         }),
-        OwnerSpiritReply::DrainedAndStopped(DrainedAndStopped {}),
-        OwnerSpiritReply::BootstrapPolicyReloaded(BootstrapPolicyReloaded {}),
-        OwnerSpiritReply::IdentityRegistered(IdentityRegistered {
+        Reply::DrainedAndStopped(DrainedAndStopped {}),
+        Reply::BootstrapPolicyReloaded(BootstrapPolicyReloaded {}),
+        Reply::IdentityRegistered(IdentityRegistered {
             name: IdentityName::new("author"),
         }),
-        OwnerSpiritReply::IdentityRetired(IdentityRetired {
+        Reply::IdentityRetired(IdentityRetired {
             name: IdentityName::new("author"),
         }),
-        OwnerSpiritReply::RequestUnimplemented(RequestUnimplemented {
+        Reply::RequestUnimplemented(RequestUnimplemented {
             reason: UnimplementedReason::NotBuiltYet,
         }),
     ];
@@ -124,9 +123,24 @@ fn owner_spirit_replies_round_trip() {
 }
 
 #[test]
+fn owner_spirit_reply_payloads_convert_through_macro_generated_from_impls() {
+    let reply: Reply = Started {
+        generation: Generation::new(1),
+    }
+    .into();
+
+    assert_eq!(
+        reply,
+        Reply::Started(Started {
+            generation: Generation::new(1),
+        })
+    );
+}
+
+#[test]
 fn owner_spirit_request_variants_are_contract_local_verbs() {
     assert_eq!(
-        OwnerSpiritRequest::HEADS,
+        Operation::HEADS,
         &["Start", "Drain", "Reload", "Register", "Retire"]
     );
 }
@@ -134,36 +148,27 @@ fn owner_spirit_request_variants_are_contract_local_verbs() {
 #[test]
 fn owner_spirit_request_heads_have_no_universal_verb_wrapper() {
     round_trip_nota(
-        OwnerSpiritRequest::Start(Start {
+        Operation::Start(Start {
             generation: Generation::new(1),
         }),
         "(Start (1))",
     );
-    round_trip_nota(OwnerSpiritRequest::Drain(Drain {}), "(Drain ())");
-    round_trip_nota(
-        OwnerSpiritRequest::Reload(BootstrapPolicy {}),
-        "(Reload ())",
-    );
-    round_trip_nota(
-        OwnerSpiritRequest::Register(registration()),
-        "(Register (author))",
-    );
-    round_trip_nota(
-        OwnerSpiritRequest::Retire(retirement()),
-        "(Retire (author))",
-    );
+    round_trip_nota(Operation::Drain(Drain {}), "(Drain ())");
+    round_trip_nota(Operation::Reload(BootstrapPolicy {}), "(Reload ())");
+    round_trip_nota(Operation::Register(registration()), "(Register (author))");
+    round_trip_nota(Operation::Retire(retirement()), "(Retire (author))");
 }
 
 #[test]
 fn owner_spirit_canonical_examples_round_trip() {
     round_trip_nota(
-        OwnerSpiritReply::Started(Started {
+        Reply::Started(Started {
             generation: Generation::new(1),
         }),
         "(Started (1))",
     );
     round_trip_nota(
-        OwnerSpiritReply::RequestUnimplemented(RequestUnimplemented {
+        Reply::RequestUnimplemented(RequestUnimplemented {
             reason: UnimplementedReason::NotBuiltYet,
         }),
         "(RequestUnimplemented (NotBuiltYet))",
