@@ -102,7 +102,7 @@ pub struct RequestUnimplemented {
 }
 
 signal_channel! {
-    channel OwnerSpirit {
+    channel Owner {
         operation Start(Start),
         operation Drain(Drain),
         operation Reload(BootstrapPolicy),
