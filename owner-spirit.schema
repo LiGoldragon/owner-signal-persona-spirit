@@ -1,0 +1,41 @@
+{}
+
+[]
+
+[(Owner (Start Drain Reload Register Retire))]
+
+[]
+
+{
+  Owner ((Start) (Drain) (Reload BootstrapPolicy) (Register Registration) (Retire Retirement))
+
+  Generation [u64]
+  IdentityName [String]
+
+  Start [Generation]
+  Drain [Unit]
+  BootstrapPolicy [Unit]
+  Registration [IdentityName]
+  Retirement [IdentityName]
+
+  Unit [String]
+
+  Started [Generation]
+  DrainedAndStopped [Unit]
+  BootstrapPolicyReloaded [Unit]
+  IdentityRegistered [IdentityName]
+  IdentityRetired [IdentityName]
+  RequestUnimplemented [UnimplementedReason]
+
+  UnimplementedReason (NotBuiltYet DependencyNotReady)
+}
+
+[
+  (Reply
+    Started
+    DrainedAndStopped
+    BootstrapPolicyReloaded
+    IdentityRegistered
+    IdentityRetired
+    RequestUnimplemented)
+]

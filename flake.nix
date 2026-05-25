@@ -25,7 +25,16 @@
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
         examplesFilter = path: _type: builtins.match ".*/examples(/.*)?$" path != null;
         sourceFilter = path: type:
-          (craneLib.filterCargoSources path type) || (examplesFilter path type);
+          let
+            pathString = toString path;
+            generated = builtins.match ".*/target(/.*)?" pathString != null;
+            jjMetadata = builtins.match ".*/\\.jj(/.*)?" pathString != null;
+          in
+          !generated
+          && !jjMetadata
+          && ((craneLib.filterCargoSources path type)
+            || (examplesFilter path type)
+            || (builtins.match ".*\\.schema$" pathString != null));
         src = pkgs.lib.cleanSourceWith {
           src = ./.;
           filter = sourceFilter;
